@@ -11,3 +11,7 @@ type TimeEntry struct {
 	Note      string
 	CreatedAt time.Time
 }
+
+func (t TimeEntry) GetItem() uint {
+	return t.ID
+}

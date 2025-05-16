@@ -10,3 +10,7 @@ type TaskTag struct {
 	TaskID uint
 	TagID  uint
 }
+
+func (t Tag) GetItem() uint {
+	return t.ID
+}
