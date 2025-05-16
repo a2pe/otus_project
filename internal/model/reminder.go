@@ -10,3 +10,7 @@ type Reminder struct {
 	IsSent    bool
 	CreatedAt time.Time
 }
+
+func (r Reminder) GetItem() uint {
+	return r.ID
+}
