@@ -9,3 +9,7 @@ type Project struct {
 	Description string
 	CreatedAt   time.Time
 }
+
+func (p Project) GetItem() uint {
+	return p.ID
+}

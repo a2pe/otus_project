@@ -8,7 +8,11 @@ type Task struct {
 	Title       string
 	Description string
 	Status      string
-	DueDate     *time.Time
+	DueDate     time.Time
 	EstimateHrs float64
 	CreatedAt   time.Time
+}
+
+func (t Task) GetItem() uint {
+	return t.ID
 }
