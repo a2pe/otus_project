@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math/rand"
@@ -11,21 +12,20 @@ import (
 	"time"
 )
 
-func GenerateData() {
-	dataChan := make(chan common.Item, 100) // buffered to avoid blocking
+func GenerateData(ctx context.Context) {
+	dataChan := make(chan common.Item, 1000)
 	var wg sync.WaitGroup
 
-	// data generator to run for 2 minutes
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		timeout := time.After(2 * time.Minute)
 		ticker := time.NewTicker(100 * time.Millisecond)
 		defer ticker.Stop()
 
 		for {
 			select {
-			case <-timeout:
+			case <-ctx.Done():
+				log.Println("context done; data generation cancelled")
 				close(dataChan)
 				return
 			case <-ticker.C:

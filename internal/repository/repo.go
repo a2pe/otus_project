@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/go-kit/log"
@@ -79,17 +80,28 @@ func checkAndLogNewItems[T any](label string, mu *sync.Mutex, slice *[]*T, lastL
 	}
 }
 
-func StartSliceLogger() {
+func StartSliceLogger(context context.Context) {
 	go func() {
-		for {
-			time.Sleep(200 * time.Millisecond)
+		ticker := time.NewTicker(200 * time.Millisecond)
+		defer ticker.Stop()
 
-			checkAndLogNewItems("User", &usersMu, &users, &lastUsersLen)
-			checkAndLogNewItems("Project", &projectsMu, &projects, &lastProjectsLen)
-			checkAndLogNewItems("Task", &tasksMu, &tasks, &lastTasksLen)
-			checkAndLogNewItems("Reminder", &remindersMu, &reminders, &lastRemindersLen)
-			checkAndLogNewItems("Tag", &tagsMu, &tags, &lastTagsLen)
-			checkAndLogNewItems("TimeEntry", &timeEntriesMu, &timeEntries, &lastTimeEntriesLen)
+		for {
+			select {
+			case <-context.Done():
+				err := logger.Log("msg", "context done: slice logger is stopped")
+				if err != nil {
+					fmt.Println(err)
+				}
+				return
+			case <-ticker.C:
+				checkAndLogNewItems("User", &usersMu, &users, &lastUsersLen)
+				checkAndLogNewItems("Project", &projectsMu, &projects, &lastProjectsLen)
+				checkAndLogNewItems("Task", &tasksMu, &tasks, &lastTasksLen)
+				checkAndLogNewItems("Reminder", &remindersMu, &reminders, &lastRemindersLen)
+				checkAndLogNewItems("Tag", &tagsMu, &tags, &lastTagsLen)
+				checkAndLogNewItems("TimeEntry", &timeEntriesMu, &timeEntries, &lastTimeEntriesLen)
+
+			}
 		}
 	}()
 }
