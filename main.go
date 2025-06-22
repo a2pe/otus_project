@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
-	"log"
+	"errors"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
+	"io"
 	"os"
 	"os/signal"
 	"otus_project/internal/logger"
@@ -11,21 +14,31 @@ import (
 )
 
 func main() {
+	loggerOutput := log.NewLogfmtLogger(os.Stdout)
+	loggerOutput = log.With(loggerOutput, "ts", log.DefaultTimestampUTC)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTSTP, syscall.SIGSTOP, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGKILL)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		<-sigChan
-		log.Println("Program interrupted: shutting down")
+		sig := <-sigChan
+		level.Info(loggerOutput).Log("msg", "Received shutdown signal", "signal", sig.String())
 		cancel()
 	}()
 
-	logger.StartSliceLogger(ctx)
+	if err := logger.LoadAll(); err != nil {
+		if errors.Is(err, io.EOF) {
+			level.Info(loggerOutput).Log("msg", "No data to load", "err", err)
+		}
+		level.Error(loggerOutput).Log("msg", "Failed to load data", "err", err)
+	}
+
+	logger.StartSliceLogger(ctx, loggerOutput)
+
 	service.GenerateData(ctx)
 
-	log.Println("Program shut down successfully")
-
+	level.Info(loggerOutput).Log("msg", "Program shut down successfully")
 }
