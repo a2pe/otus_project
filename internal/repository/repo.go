@@ -1,40 +1,27 @@
 package repository
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"github.com/go-kit/log"
-	"os"
 	"otus_project/internal/model"
 	"otus_project/internal/model/common"
 	"sync"
-	"time"
 )
 
 var (
-	logger = log.NewLogfmtLogger(os.Stdout)
+	UsersMu       sync.Mutex
+	ProjectsMu    sync.Mutex
+	TasksMu       sync.Mutex
+	RemindersMu   sync.Mutex
+	TagsMu        sync.Mutex
+	TimeEntriesMu sync.Mutex
 
-	lastUsersLen       int
-	lastProjectsLen    int
-	lastTasksLen       int
-	lastRemindersLen   int
-	lastTagsLen        int
-	lastTimeEntriesLen int
-
-	usersMu       sync.Mutex
-	projectsMu    sync.Mutex
-	tasksMu       sync.Mutex
-	remindersMu   sync.Mutex
-	tagsMu        sync.Mutex
-	timeEntriesMu sync.Mutex
-
-	users       []*model.User
-	projects    []*model.Project
-	reminders   []*model.Reminder
-	tags        []*model.Tag
-	timeEntries []*model.TimeEntry
-	tasks       []*model.Task
+	Users       []*model.User
+	Projects    []*model.Project
+	Reminders   []*model.Reminder
+	Tags        []*model.Tag
+	TimeEntries []*model.TimeEntry
+	Tasks       []*model.Task
 )
 
 func appendWithLock[T any](mu *sync.Mutex, slice *[]*T, item *T) {
@@ -46,62 +33,19 @@ func appendWithLock[T any](mu *sync.Mutex, slice *[]*T, item *T) {
 func SaveItem(item common.Item) error {
 	switch v := item.(type) {
 	case model.User:
-		appendWithLock(&usersMu, &users, &v)
+		appendWithLock(&UsersMu, &Users, &v)
 	case model.Project:
-		appendWithLock(&projectsMu, &projects, &v)
+		appendWithLock(&ProjectsMu, &Projects, &v)
 	case model.Task:
-		appendWithLock(&tasksMu, &tasks, &v)
+		appendWithLock(&TasksMu, &Tasks, &v)
 	case model.Reminder:
-		appendWithLock(&remindersMu, &reminders, &v)
+		appendWithLock(&RemindersMu, &Reminders, &v)
 	case model.Tag:
-		appendWithLock(&tagsMu, &tags, &v)
+		appendWithLock(&TagsMu, &Tags, &v)
 	case model.TimeEntry:
-		appendWithLock(&timeEntriesMu, &timeEntries, &v)
+		appendWithLock(&TimeEntriesMu, &TimeEntries, &v)
 	default:
 		return errors.New(fmt.Sprintf("Error saving: %v", v.GetItem()))
 	}
 	return nil
-}
-
-func checkAndLogNewItems[T any](label string, mu *sync.Mutex, slice *[]*T, lastLen *int) {
-	mu.Lock()
-	defer mu.Unlock()
-
-	currentLen := len(*slice)
-	if currentLen > *lastLen {
-		newItems := (*slice)[*lastLen:]
-		for _, item := range newItems {
-			err := logger.Log("msg", "New item added:", "label", label, "item", fmt.Sprintf("%+v", *item))
-			if err != nil {
-				return
-			}
-		}
-		*lastLen = currentLen
-	}
-}
-
-func StartSliceLogger(context context.Context) {
-	go func() {
-		ticker := time.NewTicker(200 * time.Millisecond)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-context.Done():
-				err := logger.Log("msg", "context done: slice logger is stopped")
-				if err != nil {
-					fmt.Println(err)
-				}
-				return
-			case <-ticker.C:
-				checkAndLogNewItems("User", &usersMu, &users, &lastUsersLen)
-				checkAndLogNewItems("Project", &projectsMu, &projects, &lastProjectsLen)
-				checkAndLogNewItems("Task", &tasksMu, &tasks, &lastTasksLen)
-				checkAndLogNewItems("Reminder", &remindersMu, &reminders, &lastRemindersLen)
-				checkAndLogNewItems("Tag", &tagsMu, &tags, &lastTagsLen)
-				checkAndLogNewItems("TimeEntry", &timeEntriesMu, &timeEntries, &lastTimeEntriesLen)
-
-			}
-		}
-	}()
 }

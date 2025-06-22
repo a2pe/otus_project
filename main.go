@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"otus_project/internal/repository"
+	"otus_project/internal/logger"
 	"otus_project/internal/service"
 	"syscall"
 )
@@ -15,7 +15,7 @@ func main() {
 	defer cancel()
 
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTSTP, syscall.SIGSTOP, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGKILL)
 
 	go func() {
 		<-sigChan
@@ -23,7 +23,7 @@ func main() {
 		cancel()
 	}()
 
-	repository.StartSliceLogger(ctx)
+	logger.StartSliceLogger(ctx)
 	service.GenerateData(ctx)
 
 	log.Println("Program shut down successfully")
