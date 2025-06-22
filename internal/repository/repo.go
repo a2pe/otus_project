@@ -4,41 +4,46 @@ import (
 	"errors"
 	"fmt"
 	"otus_project/internal/model"
+	"otus_project/internal/model/common"
+	"sync"
 )
-
-type Item interface {
-	GetItem() uint
-}
 
 var (
-	users       []*model.User
-	projects    []*model.Project
-	reminders   []*model.Reminder
-	tags        []*model.Tag
-	timeEntries []*model.TimeEntry
-	tasks       []*model.Task
+	UsersMu       sync.Mutex
+	ProjectsMu    sync.Mutex
+	TasksMu       sync.Mutex
+	RemindersMu   sync.Mutex
+	TagsMu        sync.Mutex
+	TimeEntriesMu sync.Mutex
+
+	Users       []*model.User
+	Projects    []*model.Project
+	Reminders   []*model.Reminder
+	Tags        []*model.Tag
+	TimeEntries []*model.TimeEntry
+	Tasks       []*model.Task
 )
 
-func SaveItem(item Item) error {
+func appendWithLock[T any](mu *sync.Mutex, slice *[]*T, item *T) {
+	mu.Lock()
+	defer mu.Unlock()
+	*slice = append(*slice, item)
+}
+
+func SaveItem(item common.Item) error {
 	switch v := item.(type) {
 	case model.User:
-		users = append(users, &v)
-		fmt.Println("User saved:", v)
+		appendWithLock(&UsersMu, &Users, &v)
 	case model.Project:
-		projects = append(projects, &v)
-		fmt.Println("Project saved:", v)
+		appendWithLock(&ProjectsMu, &Projects, &v)
 	case model.Task:
-		tasks = append(tasks, &v)
-		fmt.Println("Task saved:", v)
+		appendWithLock(&TasksMu, &Tasks, &v)
 	case model.Reminder:
-		reminders = append(reminders, &v)
-		fmt.Println("Reminder saved:", v)
+		appendWithLock(&RemindersMu, &Reminders, &v)
 	case model.Tag:
-		tags = append(tags, &v)
-		fmt.Println("Tag saved:", v)
+		appendWithLock(&TagsMu, &Tags, &v)
 	case model.TimeEntry:
-		timeEntries = append(timeEntries, &v)
-		fmt.Println("TimeEntry saved:", v)
+		appendWithLock(&TimeEntriesMu, &TimeEntries, &v)
 	default:
 		return errors.New(fmt.Sprintf("Error saving: %v", v.GetItem()))
 	}
