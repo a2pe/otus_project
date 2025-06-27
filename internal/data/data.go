@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"sync"
 )
 
 const (
@@ -37,7 +36,7 @@ func ensureFileExists(filePath string) error {
 	return nil
 }
 
-func LoadDataFromFile[T any](filePath string, mu *sync.Mutex, data *[]*T, lastLen *int) error {
+func LoadDataFromFile[T any](filePath string, data *[]*T, lastLen *int) error {
 	if err := ensureFileExists(filePath); err != nil {
 		return err
 	}
@@ -52,9 +51,6 @@ func LoadDataFromFile[T any](filePath string, mu *sync.Mutex, data *[]*T, lastLe
 	if err := json.NewDecoder(f).Decode(&loaded); err != nil {
 		return fmt.Errorf("failed to decode file %s: %w", filePath, err)
 	}
-
-	mu.Lock()
-	defer mu.Unlock()
 
 	*data = loaded
 	*lastLen = len(loaded)
@@ -79,4 +75,21 @@ func AppendToFile[T any](path string, item *T) error {
 		return fmt.Errorf("failed to append to file %s: %w", filePath, err)
 	}
 	return err
+}
+
+func SaveSliceToFile[T any](path string, slice []*T) error {
+	filePath := GetFinalFilePath(path)
+
+	f, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to create file %s: %w", filePath, err)
+	}
+	defer f.Close()
+
+	encoder := json.NewEncoder(f)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(slice); err != nil {
+		return fmt.Errorf("failed to encode slice to file %s: %w", filePath, err)
+	}
+	return nil
 }

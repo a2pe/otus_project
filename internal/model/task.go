@@ -13,6 +13,10 @@ type Task struct {
 	CreatedAt   time.Time
 }
 
-func (t Task) GetItem() uint {
+func (t *Task) GetItem() uint {
 	return t.ID
+}
+
+func (t *Task) SetID(item uint) {
+	t.ID = item
 }

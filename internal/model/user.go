@@ -23,6 +23,10 @@ func (u *User) SetPassword(password string) {
 	u.password = password
 }
 
-func (u User) GetItem() uint {
+func (u *User) GetItem() uint {
 	return u.ID
+}
+
+func (u *User) SetID(item uint) {
+	u.ID = item
 }
