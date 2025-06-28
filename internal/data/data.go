@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 )
 
 const (
@@ -77,7 +78,30 @@ func AppendToFile[T any](path string, item *T) error {
 	return err
 }
 
-func SaveSliceToFile[T any](path string, slice []*T) error {
+//func SaveSliceToFile[T any](path string, mu *sync.RWMutex, slice []*T) error {
+//	filePath := GetFinalFilePath(path)
+//
+//	mu.Lock()
+//	defer mu.Unlock()
+//
+//	f, err := os.Create(filePath)
+//	if err != nil {
+//		return fmt.Errorf("failed to create file %s: %w", filePath, err)
+//	}
+//	defer f.Close()
+//
+//	encoder := json.NewEncoder(f)
+//	encoder.SetIndent("", "  ")
+//	if err := encoder.Encode(slice); err != nil {
+//		return fmt.Errorf("failed to encode slice to file %s: %w", filePath, err)
+//	}
+//	return nil
+//}
+
+func SaveSliceToFile[T any](path string, mu *sync.RWMutex, slice []*T) error {
+	mu.Lock()
+	defer mu.Unlock()
+
 	filePath := GetFinalFilePath(path)
 
 	f, err := os.Create(filePath)

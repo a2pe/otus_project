@@ -20,3 +20,7 @@ func (t *Task) GetItem() uint {
 func (t *Task) SetID(item uint) {
 	t.ID = item
 }
+
+func (t *Task) SetCreatedAt(date time.Time) {
+	t.CreatedAt = date
+}

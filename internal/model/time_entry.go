@@ -19,3 +19,7 @@ func (t *TimeEntry) GetItem() uint {
 func (t *TimeEntry) SetID(item uint) {
 	t.TaskID = item
 }
+
+func (t *TimeEntry) SetCreatedAt(date time.Time) {
+	t.CreatedAt = date
+}

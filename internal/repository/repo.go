@@ -3,7 +3,6 @@ package repository
 import (
 	"errors"
 	"fmt"
-	"log"
 	"otus_project/internal/data"
 	"otus_project/internal/model"
 	"otus_project/internal/model/common"
@@ -35,42 +34,186 @@ var (
 	Tasks       []*model.Task
 )
 
+func GetByID(itemType string, id int) (common.Item, bool) {
+	reg, ok := DataRegistry[itemType]
+	if !ok {
+		return nil, false
+	}
+
+	reg.Mutex.RLock()
+	defer reg.Mutex.RUnlock()
+
+	switch data := reg.Data.(type) {
+	case *[]*model.User:
+		item := findItem(*data, id)
+		return item, item != nil
+	case *[]*model.Project:
+		item := findItem(*data, id)
+		return item, item != nil
+	case *[]*model.Task:
+		item := findItem(*data, id)
+		return item, item != nil
+	case *[]*model.Reminder:
+		item := findItem(*data, id)
+		return item, item != nil
+	case *[]*model.Tag:
+		item := findItem(*data, id)
+		return item, item != nil
+	case *[]*model.TimeEntry:
+		item := findItem(*data, id)
+		return item, item != nil
+	default:
+		return nil, false
+	}
+}
+
+func findItem[T any](items []*T, id int) common.Item {
+	for _, item := range items {
+		if i, ok := any(item).(common.Item); ok && int(i.GetItem()) == id {
+			return i
+		}
+	}
+	return nil
+}
+
+func GetAllItems(itemType string) (any, error) {
+	reg, ok := DataRegistry[itemType]
+	if !ok {
+		return nil, fmt.Errorf("unknown item type: %s", itemType)
+	}
+
+	reg.Mutex.RLock()
+	defer reg.Mutex.RUnlock()
+
+	switch data := reg.Data.(type) {
+	case *[]*model.User:
+		return data, nil
+	case *[]*model.Project:
+		return data, nil
+	case *[]*model.Task:
+		return data, nil
+	case *[]*model.Reminder:
+		return data, nil
+	case *[]*model.Tag:
+		return data, nil
+	case *[]*model.TimeEntry:
+		return data, nil
+	default:
+		return nil, fmt.Errorf("unsupported data type for: %s", itemType)
+	}
+}
+
+func UpdateItem(itemType string, updated common.Item) bool {
+	reg, ok := DataRegistry[itemType]
+	if !ok {
+		return false
+	}
+
+	reg.Mutex.Lock()
+	defer reg.Mutex.Unlock()
+
+	switch data := reg.Data.(type) {
+	case *[]*model.User:
+		return updateItemInSlice(data, updated)
+	case *[]*model.Project:
+		return updateItemInSlice(data, updated)
+	case *[]*model.Task:
+		return updateItemInSlice(data, updated)
+	case *[]*model.Reminder:
+		return updateItemInSlice(data, updated)
+	case *[]*model.Tag:
+		return updateItemInSlice(data, updated)
+	case *[]*model.TimeEntry:
+		return updateItemInSlice(data, updated)
+	default:
+		return false
+	}
+}
+
+func updateItemInSlice[T any](slice *[]*T, updated common.Item) bool {
+	for i, item := range *slice {
+		if orig, ok := any(item).(common.Item); ok && orig.GetItem() == updated.GetItem() {
+			if newVal, ok := any(updated).(*T); ok {
+				(*slice)[i] = newVal
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func DeleteItem(itemType string, id int) bool {
+	reg, ok := DataRegistry[itemType]
+	if !ok {
+		return false
+	}
+
+	reg.Mutex.Lock()
+	defer reg.Mutex.Unlock()
+
+	switch data := reg.Data.(type) {
+	case *[]*model.User:
+		return deleteItemFromSlice(data, id)
+	case *[]*model.Project:
+		return deleteItemFromSlice(data, id)
+	case *[]*model.Task:
+		return deleteItemFromSlice(data, id)
+	case *[]*model.Reminder:
+		return deleteItemFromSlice(data, id)
+	case *[]*model.Tag:
+		return deleteItemFromSlice(data, id)
+	case *[]*model.TimeEntry:
+		return deleteItemFromSlice(data, id)
+	default:
+		return false
+	}
+}
+
+func deleteItemFromSlice[T any](slice *[]*T, id int) bool {
+	for i, item := range *slice {
+		if v, ok := any(item).(common.Item); ok && int(v.GetItem()) == id {
+			*slice = append((*slice)[:i], (*slice)[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
 func appendWithLock[T any](mu *sync.RWMutex, slice *[]*T, item *T) {
 	mu.Lock()
 	defer mu.Unlock()
 	*slice = append(*slice, item)
 }
 
+func prepareNewItem[T common.Item](item T, counter *uint64) {
+	item.SetID(uint(atomic.AddUint64(counter, 1)))
+	item.SetCreatedAt(time.Now())
+}
+
 func SaveItem(item common.Item) error {
 	switch v := item.(type) {
 	case *model.User:
-		v.ID = uint(atomic.AddUint64(&userCounter, 1))
-		v.CreatedAt = time.Now()
+		prepareNewItem(v, &userCounter)
 		appendWithLock(&UsersMu, &Users, v)
 		return data.AppendToFile(data.UsersFile, v)
 	case *model.Project:
-		v.ID = uint(atomic.AddUint64(&projectCounter, 1))
-		v.CreatedAt = time.Now()
+		prepareNewItem(v, &projectCounter)
 		appendWithLock(&ProjectsMu, &Projects, v)
 		return data.AppendToFile(data.ProjectsFile, v)
 	case *model.Task:
-		v.ID = uint(atomic.AddUint64(&taskCounter, 1))
-		v.CreatedAt = time.Now()
+		prepareNewItem(v, &taskCounter)
 		appendWithLock(&TasksMu, &Tasks, v)
 		return data.AppendToFile(data.TasksFile, v)
 	case *model.Reminder:
-		v.ID = uint(atomic.AddUint64(&reminderCounter, 1))
-		v.CreatedAt = time.Now()
+		prepareNewItem(v, &reminderCounter)
 		appendWithLock(&RemindersMu, &Reminders, v)
 		return data.AppendToFile(data.RemindersFile, v)
 	case *model.Tag:
-		v.ID = uint(atomic.AddUint64(&tagCounter, 1))
-		v.CreatedAt = time.Now()
+		prepareNewItem(v, &tagCounter)
 		appendWithLock(&TagsMu, &Tags, v)
 		return data.AppendToFile(data.TagsFile, v)
 	case *model.TimeEntry:
-		v.ID = uint(atomic.AddUint64(&timeEntriesCounter, 1))
-		v.CreatedAt = time.Now()
+		prepareNewItem(v, &timeEntriesCounter)
 		appendWithLock(&TimeEntriesMu, &TimeEntries, v)
 		return data.AppendToFile(data.TimeEntriesFile, v)
 	default:
@@ -80,21 +223,27 @@ func SaveItem(item common.Item) error {
 }
 
 func SaveAllItems(itemType string) error {
-	log.Printf("Saving %s with a new id", itemType)
-	switch itemType {
-	case "user":
-		return data.SaveSliceToFile(data.UsersFile, Users)
-	case "project":
-		return data.SaveSliceToFile(data.ProjectsFile, Projects)
-	case "task":
-		return data.SaveSliceToFile(data.TasksFile, Tasks)
-	case "reminder":
-		return data.SaveSliceToFile(data.RemindersFile, Reminders)
-	case "tag":
-		return data.SaveSliceToFile(data.TagsFile, Tags)
-	case "time_entry":
-		return data.SaveSliceToFile(data.TimeEntriesFile, TimeEntries)
-	default:
+	reg, ok := DataRegistry[itemType]
+	if !ok {
 		return fmt.Errorf("unknown item type: %s", itemType)
+	}
+
+	fmt.Printf("Saving all items of type %s to %s\n", itemType, reg.FileName)
+
+	switch info := reg.Data.(type) {
+	case *[]*model.User:
+		return data.SaveSliceToFile(reg.FileName, reg.Mutex, *info)
+	case *[]*model.Project:
+		return data.SaveSliceToFile(reg.FileName, reg.Mutex, *info)
+	case *[]*model.Task:
+		return data.SaveSliceToFile(reg.FileName, reg.Mutex, *info)
+	case *[]*model.Reminder:
+		return data.SaveSliceToFile(reg.FileName, reg.Mutex, *info)
+	case *[]*model.Tag:
+		return data.SaveSliceToFile(reg.FileName, reg.Mutex, *info)
+	case *[]*model.TimeEntry:
+		return data.SaveSliceToFile(reg.FileName, reg.Mutex, *info)
+	default:
+		return fmt.Errorf("unsupported data type for: %s", itemType)
 	}
 }

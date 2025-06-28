@@ -17,3 +17,7 @@ func (p *Project) GetItem() uint {
 func (p *Project) SetID(item uint) {
 	p.ID = item
 }
+
+func (p *Project) SetCreatedAt(date time.Time) {
+	p.CreatedAt = date
+}

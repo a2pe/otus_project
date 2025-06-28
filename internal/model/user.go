@@ -18,7 +18,6 @@ func (u *User) Email() string {
 func (u *User) SetEmail(email string) {
 	u.email = email
 }
-
 func (u *User) SetPassword(password string) {
 	u.password = password
 }
@@ -29,4 +28,8 @@ func (u *User) GetItem() uint {
 
 func (u *User) SetID(item uint) {
 	u.ID = item
+}
+
+func (u *User) SetCreatedAt(date time.Time) {
+	u.CreatedAt = date
 }

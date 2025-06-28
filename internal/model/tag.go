@@ -21,3 +21,7 @@ func (t *Tag) GetItem() uint {
 func (t *Tag) SetID(item uint) {
 	t.ID = item
 }
+
+func (t *Tag) SetCreatedAt(date time.Time) {
+	t.CreatedAt = date
+}

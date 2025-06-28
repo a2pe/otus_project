@@ -18,3 +18,7 @@ func (r *Reminder) GetItem() uint {
 func (r *Reminder) SetID(item uint) {
 	r.ID = item
 }
+
+func (r *Reminder) SetCreatedAt(date time.Time) {
+	r.CreatedAt = date
+}
