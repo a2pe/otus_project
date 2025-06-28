@@ -1,3 +1,12 @@
+// @title Productivity Tracker API
+// @version 1.0
+// @description API for tracking users, projects, tasks and more.
+// @BasePath /api
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+
 package app
 
 import (
@@ -14,6 +23,9 @@ import (
 	"otus_project/internal/handler"
 	"syscall"
 	"time"
+
+	"github.com/swaggo/http-swagger"
+	_ "otus_project/docs" // важно для init() из swag
 )
 
 type App struct {
@@ -38,6 +50,8 @@ func (a *App) registerRoutes(r chi.Router) {
 			r.Delete(fmt.Sprintf("/%s/{id}", t), handler.DeleteItemHandler(t))
 			r.Get(fmt.Sprintf("/%s/{id}", t), handler.GetItemByIDHandler(t))
 		}
+		r.Get("/swagger/*", httpSwagger.WrapHandler)
+
 	})
 }
 

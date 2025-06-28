@@ -1,0 +1,202 @@
+definitions:
+  handler.Credentials:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  handler.TokenResponse:
+    properties:
+      token:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/{type}:
+    get:
+      description: 'Возвращает список сущностей по типу: user, project, task, reminder,
+        tag, time_entry'
+      parameters:
+      - description: Тип сущности (user, project, task...)
+        in: path
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items: {}
+            type: array
+        "400":
+          description: unknown item type
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Получить список сущностей
+      tags:
+      - items
+    post:
+      consumes:
+      - application/json
+      description: 'Создаёт сущность указанного типа: user, project, task, reminder,
+        tag, time_entry'
+      parameters:
+      - description: 'Любая модель: user/project/task/etc'
+        in: body
+        name: item
+        required: true
+        schema: {}
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: invalid json
+          schema:
+            type: string
+        "500":
+          description: failed to save item
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Создание сущности
+      tags:
+      - items
+  /api/{type}/{id}:
+    delete:
+      description: Удаляет сущность по ID и типу
+      parameters:
+      - description: Тип сущности
+        in: path
+        name: type
+        required: true
+        type: string
+      - description: ID сущности
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Удалить сущность
+      tags:
+      - items
+    get:
+      description: Возвращает сущность по типу и ID
+      parameters:
+      - description: Тип сущности
+        in: path
+        name: type
+        required: true
+        type: string
+      - description: ID сущности
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Получить сущность по ID
+      tags:
+      - items
+    put:
+      consumes:
+      - application/json
+      description: Обновляет сущность по ID
+      parameters:
+      - description: Тип сущности
+        in: path
+        name: type
+        required: true
+        type: string
+      - description: ID сущности
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Обновлённая сущность
+        in: body
+        name: item
+        required: true
+        schema: {}
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Обновить сущность
+      tags:
+      - items
+  /api/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login and password
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/handler.Credentials'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.TokenResponse'
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+      summary: Авторизация
+      tags:
+      - auth
+swagger: "2.0"

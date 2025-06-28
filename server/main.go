@@ -1,3 +1,11 @@
+// @title Productivity Tracker API
+// @version 1.0
+// @description API for tracking users, projects, tasks and more.
+// @BasePath /api
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 package main
 
 import (
