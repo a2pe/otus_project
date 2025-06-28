@@ -2,14 +2,17 @@ package handler
 
 import (
 	"encoding/json"
+	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v5"
 	"net/http"
-	"os"
+	"otus_project/internal/config"
+
 	"time"
 )
 
 type Credentials struct {
-	Login    string `json:"login"`
-	Password string `json:"password"`
+	Login    string `json:"login" validate:"required,min=3,max=32"`
+	Password string `json:"password" validate:"required,min=4,max=64"`
 }
 
 type TokenResponse struct {
@@ -32,17 +35,25 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if creds.Login != os.Getenv("ADMIN_LOGIN") || creds.Password != os.Getenv("ADMIN_PASSWORD") {
+	validate := validator.New()
+	if err := validate.Struct(creds); err != nil {
+		http.Error(w, "validation error: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	authConfig := config.LoadAuthConfig()
+
+	if creds.Login != authConfig.AdminLogin || creds.Password != authConfig.AdminPassword {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	claims := jwt.MapClaims{
 		"login": creds.Login,
-		"exp":   time.Now().Add(time.Hour * 24).Unix(),
+		"exp":   time.Now().Add(time.Hour * 8).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signed, _ := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	signed, _ := token.SignedString([]byte(authConfig.JWTSecret))
 
 	resp := TokenResponse{Token: signed}
 	w.Header().Set("Content-Type", "application/json")

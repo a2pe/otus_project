@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 )
 
 const (
@@ -24,20 +25,31 @@ func GetFinalFilePath(file string) string {
 	return finalPath
 }
 
-func ensureFileExists(filePath string) error {
-	_, err := os.Stat(filePath)
+func ensureFileWithEmptyArray(path string) error {
+	info, err := os.Stat(path)
+
 	if os.IsNotExist(err) {
-		f, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			return fmt.Errorf("failed to create file %s: %w", filePath, err)
+		if err := os.WriteFile(path, []byte("[]"), 0644); err != nil {
+			return fmt.Errorf("failed to create and write to file %s: %w", path, err)
 		}
-		defer f.Close()
+		return nil
 	}
+
+	if err != nil {
+		return fmt.Errorf("failed to stat file %s: %w", path, err)
+	}
+
+	if info.Size() == 0 {
+		if err := os.WriteFile(path, []byte("[]"), 0644); err != nil {
+			return fmt.Errorf("failed to write empty array to file %s: %w", path, err)
+		}
+	}
+
 	return nil
 }
 
 func LoadDataFromFile[T any](filePath string, data *[]*T, lastLen *int) error {
-	if err := ensureFileExists(filePath); err != nil {
+	if err := ensureFileWithEmptyArray(filePath); err != nil {
 		return err
 	}
 
@@ -77,7 +89,10 @@ func AppendToFile[T any](path string, item *T) error {
 	return err
 }
 
-func SaveSliceToFile[T any](path string, slice []*T) error {
+func SaveSliceToFile[T any](path string, mu *sync.RWMutex, slice []*T) error {
+	mu.Lock()
+	defer mu.Unlock()
+
 	filePath := GetFinalFilePath(path)
 
 	f, err := os.Create(filePath)

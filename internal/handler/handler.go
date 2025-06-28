@@ -36,7 +36,7 @@ func GetItemByIDHandler(itemType string) http.HandlerFunc {
 			return
 		}
 
-		item, ok := getLockedByID(itemType, id)
+		item, ok := repository.GetByID(itemType, id)
 		if !ok {
 			http.NotFound(w, r)
 			return
@@ -61,17 +61,14 @@ func GetItemByIDHandler(itemType string) http.HandlerFunc {
 // @Security BearerAuth
 func GetAllHandler(itemType string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		reg, ok := repository.DataRegistry[itemType]
-		if !ok {
-			http.Error(w, ErrUnknownType.Error(), http.StatusBadRequest)
+		data, err := repository.GetAllItems(itemType)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		reg.Mutex.RLock()
-		defer reg.Mutex.RUnlock()
-
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(reg.Data); err != nil {
+		if err := json.NewEncoder(w).Encode(data); err != nil {
 			http.Error(w, "Failed to encode data", http.StatusInternalServerError)
 		}
 	}
@@ -107,8 +104,8 @@ func CreateItemHandler(itemType string) http.HandlerFunc {
 			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
 		if err := json.NewEncoder(w).Encode("Data successfully added! :)"); err != nil {
 			http.Error(w, "Failed to encode data", http.StatusInternalServerError)
 		}
@@ -147,9 +144,10 @@ func UpdateItemHandler(itemType string) http.HandlerFunc {
 			http.Error(w, ErrInvalidJSON.Error(), http.StatusBadRequest)
 			return
 		}
+
 		item.SetID(uint(id))
 
-		if !updateItemWithLock(itemType, id, item) {
+		if !repository.UpdateItem(itemType, item) {
 			http.NotFound(w, r)
 			return
 		}
@@ -177,7 +175,7 @@ func DeleteItemHandler(itemType string) http.HandlerFunc {
 			return
 		}
 
-		if !deleteItemWithLock(itemType, id) {
+		if !repository.DeleteItem(itemType, id) {
 			http.NotFound(w, r)
 			return
 		}
