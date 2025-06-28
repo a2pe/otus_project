@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-
 	"os/signal"
 	"otus_project/internal/config"
 	"otus_project/internal/handler"
@@ -23,8 +22,8 @@ type App struct {
 
 func NewApp(ctx context.Context) (*App, error) {
 	return &App{
-		config.NewConfig(),
-		ctx,
+		cfg: config.NewConfig(),
+		ctx: ctx,
 	}, nil
 }
 
@@ -42,38 +41,39 @@ func (a *App) registerRoutes(r chi.Router) {
 }
 
 func (a *App) Start() error {
-	ctx, stop := signal.NotifyContext(a.ctx, os.Interrupt, syscall.SIGINT, syscall.SIGKILL)
+	ctx, stop := signal.NotifyContext(a.ctx, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	router := chi.NewRouter()
 	a.registerRoutes(router)
 
-	serverHTTP := &http.Server{
+	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", a.cfg.Host, a.cfg.Port),
 		Handler: router,
 	}
 
 	go func() {
-		if err := serverHTTP.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("listen: %s\n", err)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("HTTP server error: %v", err)
 		}
 	}()
 
-	<-ctx.Done()
-	//<-a.ctx.Done() // А в чем разница между такими вызовами? Вызов завершенного контекста в App или это он же и есть?
-	//stop()
+	log.Println("Server is running...")
 
-	log.Println("Shutting down server")
+	<-ctx.Done()
+
+	log.Println("Shutting down server gracefully...")
 	ctxTimeout, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	if err := serverHTTP.Shutdown(ctxTimeout); err != nil {
-		log.Fatalf("Server Shutdown Failed:%+v", err)
+	if err := server.Shutdown(ctxTimeout); err != nil {
+		log.Fatalf("Server shutdown failed: %v", err)
 	}
-	log.Println("Server Exited Properly")
+	log.Println("Server exited cleanly")
 	return nil
 }
 
 func (a *App) Stop() error {
+	// опционально, если захочешь вручную завершать App
 	return nil
 }

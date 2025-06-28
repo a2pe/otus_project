@@ -1,8 +1,11 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"github.com/go-kit/log"
+	"os"
 	"otus_project/internal/data"
 	"otus_project/internal/model"
 	"otus_project/internal/model/common"
@@ -32,7 +35,135 @@ var (
 	Tags        []*model.Tag
 	TimeEntries []*model.TimeEntry
 	Tasks       []*model.Task
+
+	logger = log.NewLogfmtLogger(os.Stdout)
+
+	lastUsersLen       int
+	lastProjectsLen    int
+	lastTasksLen       int
+	lastRemindersLen   int
+	lastTagsLen        int
+	lastTimeEntriesLen int
 )
+
+func Init(ctx context.Context) error {
+	if err := LoadAll(); err != nil {
+		return fmt.Errorf("failed to load initial data: %w", err)
+	}
+
+	updateMaxIDs()
+
+	StartSliceLogger(ctx, logger)
+	return nil
+}
+
+func updateMaxIDs() {
+	for _, u := range Users {
+		if id := u.GetItem(); uint64(id) > userCounter {
+			userCounter = uint64(id)
+		}
+	}
+	for _, p := range Projects {
+		if id := p.GetItem(); uint64(id) > projectCounter {
+			projectCounter = uint64(id)
+		}
+	}
+	for _, t := range Tasks {
+		if id := t.GetItem(); uint64(id) > taskCounter {
+			taskCounter = uint64(id)
+		}
+	}
+	for _, r := range Reminders {
+		if id := r.GetItem(); uint64(id) > reminderCounter {
+			reminderCounter = uint64(id)
+		}
+	}
+	for _, tag := range Tags {
+		if id := tag.GetItem(); uint64(id) > tagCounter {
+			tagCounter = uint64(id)
+		}
+	}
+	for _, te := range TimeEntries {
+		if id := te.GetItem(); uint64(id) > timeEntriesCounter {
+			timeEntriesCounter = uint64(id)
+		}
+	}
+}
+
+func checkAndLogNewItems[T any](label string, mu *sync.RWMutex, slice *[]*T, lastLen *int) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	currentLen := len(*slice)
+	if currentLen > *lastLen {
+		newItems := (*slice)[*lastLen:]
+		for _, item := range newItems {
+			err := logger.Log("msg", "New item added:", "label", label, "item", fmt.Sprintf("%+v", *item))
+			if err != nil {
+				return
+			}
+		}
+		*lastLen = currentLen
+	}
+}
+
+func StartSliceLogger(ctx context.Context, logger log.Logger) {
+	go func() {
+		ticker := time.NewTicker(200 * time.Millisecond)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				err := logger.Log("msg", "context done: slice logger is stopped")
+				if err != nil {
+					fmt.Println(err)
+				}
+				return
+			case <-ticker.C:
+				checkAndLogNewItems("User", &UsersMu, &Users, &lastUsersLen)
+				checkAndLogNewItems("Project", &ProjectsMu, &Projects, &lastProjectsLen)
+				checkAndLogNewItems("Task", &TasksMu, &Tasks, &lastTasksLen)
+				checkAndLogNewItems("Reminder", &RemindersMu, &Reminders, &lastRemindersLen)
+				checkAndLogNewItems("Tag", &TagsMu, &Tags, &lastTagsLen)
+				checkAndLogNewItems("TimeEntry", &TimeEntriesMu, &TimeEntries, &lastTimeEntriesLen)
+
+			}
+		}
+	}()
+}
+
+func LoadAll() error {
+	var (
+		userPath        = data.GetFinalFilePath(DataRegistry["user"].FileName)
+		projectPath     = data.GetFinalFilePath(DataRegistry["project"].FileName)
+		tagsPath        = data.GetFinalFilePath(DataRegistry["tag"].FileName)
+		tasksPath       = data.GetFinalFilePath(DataRegistry["task"].FileName)
+		remindersPath   = data.GetFinalFilePath(DataRegistry["reminder"].FileName)
+		timeEntriesPath = data.GetFinalFilePath(DataRegistry["time_entry"].FileName)
+	)
+
+	if err := data.LoadDataFromFile(userPath, &Users, &lastUsersLen); err != nil {
+		return err
+
+	}
+	if err := data.LoadDataFromFile(projectPath, &Projects, &lastProjectsLen); err != nil {
+		return err
+	}
+	if err := data.LoadDataFromFile(tasksPath, &Tasks, &lastTasksLen); err != nil {
+		return err
+	}
+	if err := data.LoadDataFromFile(tagsPath, &Tags, &lastTagsLen); err != nil {
+		return err
+	}
+	if err := data.LoadDataFromFile(remindersPath, &Reminders, &lastRemindersLen); err != nil {
+		return err
+	}
+	if err := data.LoadDataFromFile(timeEntriesPath, &TimeEntries, &lastTimeEntriesLen); err != nil {
+		return err
+	}
+	return nil
+}
 
 func GetByID(itemType string, id int) (common.Item, bool) {
 	reg, ok := DataRegistry[itemType]
@@ -195,31 +326,31 @@ func SaveItem(item common.Item) error {
 	case *model.User:
 		prepareNewItem(v, &userCounter)
 		appendWithLock(&UsersMu, &Users, v)
-		return data.AppendToFile(data.UsersFile, v)
+		return SaveAllItems("user")
 	case *model.Project:
 		prepareNewItem(v, &projectCounter)
 		appendWithLock(&ProjectsMu, &Projects, v)
-		return data.AppendToFile(data.ProjectsFile, v)
+		return SaveAllItems("project")
 	case *model.Task:
 		prepareNewItem(v, &taskCounter)
 		appendWithLock(&TasksMu, &Tasks, v)
-		return data.AppendToFile(data.TasksFile, v)
+		return SaveAllItems("task")
 	case *model.Reminder:
 		prepareNewItem(v, &reminderCounter)
 		appendWithLock(&RemindersMu, &Reminders, v)
-		return data.AppendToFile(data.RemindersFile, v)
+		return SaveAllItems("reminder")
 	case *model.Tag:
 		prepareNewItem(v, &tagCounter)
 		appendWithLock(&TagsMu, &Tags, v)
-		return data.AppendToFile(data.TagsFile, v)
+		return SaveAllItems("tag")
 	case *model.TimeEntry:
 		prepareNewItem(v, &timeEntriesCounter)
 		appendWithLock(&TimeEntriesMu, &TimeEntries, v)
-		return data.AppendToFile(data.TimeEntriesFile, v)
+		return SaveAllItems("time_entry")
 	default:
-		return errors.New(fmt.Sprintf("Error saving: %v", v.GetItem()))
-	}
+		return errors.New("unsupported type in SaveItem")
 
+	}
 }
 
 func SaveAllItems(itemType string) error {
