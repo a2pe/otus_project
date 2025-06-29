@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package grpcpb;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "otus_project/internal/grpcpb;grpcpb";
+
+
+service ReminderService {
+  rpc AddReminder (AddReminderRequest) returns (AddReminderResponse);
+}
+
+message AddReminderRequest {
+  uint32 task_id = 1;
+  google.protobuf.Timestamp remind_at = 2;
+  string message = 3;
+}
+
+message AddReminderResponse {
+  bool success = 1;
+  string error = 2;
+}

@@ -3,10 +3,14 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	"net/http"
+	"otus_project/internal/model"
+	"otus_project/internal/notification"
 	"otus_project/internal/repository"
 	"strconv"
+	"time"
 )
 
 var (
@@ -102,6 +106,37 @@ func CreateItemHandler(itemType string) http.HandlerFunc {
 		if err := repository.SaveItem(item); err != nil {
 			http.Error(w, "Failed to save item", http.StatusInternalServerError)
 			return
+		}
+
+		if itemType == "task" {
+			raw := repository.DataRegistry["task"].Data
+			taskSlicePtr, ok := raw.(*[]*model.Task)
+			if ok && len(*taskSlicePtr) > 0 {
+				thisTask := (*taskSlicePtr)[len(*taskSlicePtr)-1]
+
+				reminderOffsets := []time.Duration{
+					-24 * time.Hour,
+					-8 * time.Hour,
+					-1 * time.Hour,
+				}
+				messages := []string{
+					"Reminder: task \"" + thisTask.Title + "\" is due in 24 hours!",
+					"Reminder: task \"" + thisTask.Title + "\" is due in 8 hours!",
+					"Reminder: task \"" + thisTask.Title + "\" is due in 1 hour!",
+				}
+
+				for i, offset := range reminderOffsets {
+					reminderTime := thisTask.DueDate.Add(offset).Format(time.RFC3339)
+					msg := messages[i]
+
+					go func(remindAt, message string) {
+						err := notification.ScheduleReminder(uint32(thisTask.ID), remindAt, message)
+						if err != nil {
+							fmt.Printf("Failed to schedule reminder: %v\n", err)
+						}
+					}(reminderTime, msg)
+				}
+			}
 		}
 
 		w.Header().Set("Content-Type", "application/json")

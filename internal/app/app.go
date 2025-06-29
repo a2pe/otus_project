@@ -77,6 +77,8 @@ func (a *App) Start() error {
 
 	router := chi.NewRouter()
 	a.registerRoutes(router)
+	
+	//lis, err := net.Listen("tcp", "127.0.0.1:50051") // слушаем только локалхост
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", a.cfg.Host, a.cfg.Port),
