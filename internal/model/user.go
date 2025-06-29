@@ -4,8 +4,8 @@ import "time"
 
 type User struct {
 	ID        uint      `json:"id" example:"1"`
-	email     string    `example:"user@example.com"`
-	password  string    `example:"123456"`
+	email     string    `example:"user@example.com" validate:"required"`
+	password  string    `example:"123456" validate:"required"`
 	Name      string    `json:"name" validate:"required,min=2,max=100" example:"Alice"`
 	Timezone  string    `json:"timezone" example:"America/Los_Angeles"`
 	CreatedAt time.Time `json:"created_at" example:"2024-01-01T15:04:05Z07:00"`

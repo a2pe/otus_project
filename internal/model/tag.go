@@ -5,7 +5,7 @@ import "time"
 type Tag struct {
 	ID        uint      `json:"id" example:"1"`
 	UserID    uint      `json:"user_id" example:"1"`
-	Name      string    `json:"name"`
+	Name      string    `json:"name" validate:"required"`
 	CreatedAt time.Time `json:"created_at" example:"2025-06-28T12:00:00Z"`
 }
 
