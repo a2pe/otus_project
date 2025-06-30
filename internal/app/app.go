@@ -14,14 +14,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	//"otus_project/internal"
 	"otus_project/internal/config"
 	"otus_project/internal/handler"
 	middleware2 "otus_project/middleware"
 	"syscall"
 	"time"
 
-	//"github.com/swaggo/http-swagger"
 	_ "otus_project/docs"
 )
 
@@ -36,21 +34,6 @@ func NewApp(ctx context.Context) (*App, error) {
 		ctx: ctx,
 	}, nil
 }
-
-//func (a *App) registerRoutes(r chi.Router) {
-//	r.Route("/api", func(r chi.Router) {
-//		itemTypes := []string{"user", "project", "task", "reminder", "tag", "time_entry"}
-//		for _, t := range itemTypes {
-//			r.Get(fmt.Sprintf("/%s", t), handler.GetAllHandler(t))
-//			r.Post(fmt.Sprintf("/%s", t), handler.CreateItemHandler(t))
-//			r.Put(fmt.Sprintf("/%s/{id}", t), handler.UpdateItemHandler(t))
-//			r.Delete(fmt.Sprintf("/%s/{id}", t), handler.DeleteItemHandler(t))
-//			r.Get(fmt.Sprintf("/%s/{id}", t), handler.GetItemByIDHandler(t))
-//		}
-//		r.Get("/swagger/*", httpSwagger.WrapHandler)
-//
-//	})
-//}
 
 func (a *App) registerRoutes(r chi.Router) {
 	r.Route("/api", func(r chi.Router) {
@@ -77,8 +60,6 @@ func (a *App) Start() error {
 
 	router := chi.NewRouter()
 	a.registerRoutes(router)
-	
-	//lis, err := net.Listen("tcp", "127.0.0.1:50051") // слушаем только локалхост
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", a.cfg.Host, a.cfg.Port),
@@ -107,6 +88,5 @@ func (a *App) Start() error {
 }
 
 func (a *App) Stop() error {
-	// опционально, если захочешь вручную завершать App
 	return nil
 }

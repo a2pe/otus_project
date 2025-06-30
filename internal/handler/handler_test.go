@@ -1,11 +1,13 @@
 package handler_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"otus_project/internal/handler"
 	"otus_project/internal/model"
 	"otus_project/internal/repository"
@@ -15,6 +17,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestMain(m *testing.M) {
+	ctx := context.Background()
+	if err := repository.Init(ctx); err != nil {
+		panic(err)
+	}
+
+	os.Exit(m.Run())
+}
 
 // Task Test OK: All Valid Params
 func TestCreateTaskHandler_Success(t *testing.T) {
@@ -135,7 +146,7 @@ func TestCreateItemHandler_WrongContentType_Fail(t *testing.T) {
 func TestGetItemByIDHandler_Success(t *testing.T) {
 	dueDate := time.Date(2025, time.July, 1, 0, 0, 0, 0, time.UTC)
 	item := &model.Task{Title: "demo", Status: "new", DueDate: dueDate}
-	err := repository.SaveItem(item)
+	err := repository.SaveItem(item, "task")
 	require.NoError(t, err)
 
 	r := chi.NewRouter()
@@ -177,7 +188,7 @@ func TestGetAllHandler_Success(t *testing.T) {
 func TestUpdateItemHandler_Success(t *testing.T) {
 	dueDate := time.Date(2025, time.September, 01, 0, 00, 1, 0, time.UTC)
 	task := &model.Task{Title: "Old Title", Status: "new", DueDate: dueDate}
-	err := repository.SaveItem(task)
+	err := repository.SaveItem(task, "task")
 	require.NoError(t, err)
 
 	body := `{"title": "Updated Title", "status": "in_progress", "due_date": "2025-07-01T15:04:05Z"}`
@@ -203,7 +214,7 @@ func TestUpdateItemHandler_InvalidID(t *testing.T) {
 func TestDeleteItemHandler_Success(t *testing.T) {
 	dueDate := time.Date(2025, time.July, 26, 10, 30, 0, 0, time.UTC)
 	task := &model.Task{Title: "To delete", Status: "new", DueDate: dueDate}
-	err := repository.SaveItem(task)
+	err := repository.SaveItem(task, "task")
 	require.NoError(t, err)
 
 	r := chi.NewRouter()

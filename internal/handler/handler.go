@@ -111,7 +111,7 @@ func CreateItemHandler(itemType string) http.HandlerFunc {
 			return
 		}
 
-		if err := repository.SaveItem(item); err != nil {
+		if err := repository.SaveItem(item, itemType); err != nil {
 			http.Error(w, "Failed to save item", http.StatusInternalServerError)
 			return
 		}

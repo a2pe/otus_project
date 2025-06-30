@@ -2,21 +2,11 @@
   {
     "id": 1,
     "project_id": 0,
-    "title": "Test task",
-    "description": "",
+    "title": "new_task",
+    "description": "new_task",
     "status": "new",
-    "due_date": "2025-07-01T01:45:52.145719+04:00",
-    "estimate_hrs": 0,
-    "created_at": "2025-06-30T01:45:52.145766+04:00"
-  },
-  {
-    "id": 2,
-    "project_id": 0,
-    "title": "",
-    "description": "",
-    "status": "",
-    "due_date": "0001-01-01T00:00:00Z",
-    "estimate_hrs": 0,
-    "created_at": "2025-06-30T01:45:52.146996+04:00"
+    "due_date": "2025-06-29T18:05:05Z",
+    "estimate_hrs": 1,
+    "created_at": "2025-06-30T16:29:12.191289+04:00"
   }
 ]

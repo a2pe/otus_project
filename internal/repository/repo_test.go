@@ -1,8 +1,11 @@
 package repository_test
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"otus_project/internal/model"
+	"otus_project/internal/model/common"
 	"otus_project/internal/repository"
 	"testing"
 	"time"
@@ -10,10 +13,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestMain(m *testing.M) {
+	ctx := context.Background()
+	if err := repository.Init(ctx); err != nil {
+		panic(err)
+	}
+
+	os.Exit(m.Run())
+}
+
 func TestSaveTask(t *testing.T) {
 	tests := []struct {
 		name     string
-		item     interface{}
+		item     common.Item
 		wantErr  bool
 		errCheck func(error) bool
 	}{
@@ -35,7 +47,7 @@ func TestSaveTask(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repository.SaveItem(tt.item.(*model.Task))
+			err := repository.SaveItem(tt.item.(*model.Task), "task")
 			if tt.wantErr {
 				fmt.Println(err)
 				require.Error(t, err)
@@ -52,7 +64,7 @@ func TestSaveTask(t *testing.T) {
 func TestSaveUser(t *testing.T) {
 	tests := []struct {
 		name     string
-		item     interface{}
+		item     common.Item
 		wantErr  bool
 		errCheck func(error) bool
 	}{
@@ -72,7 +84,7 @@ func TestSaveUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repository.SaveItem(tt.item.(*model.User))
+			err := repository.SaveItem(tt.item.(*model.User), "user")
 			if tt.wantErr {
 				fmt.Println(err)
 				require.Error(t, err)
@@ -89,7 +101,7 @@ func TestSaveUser(t *testing.T) {
 func TestSaveTag(t *testing.T) {
 	tests := []struct {
 		name     string
-		item     interface{}
+		item     common.Item
 		wantErr  bool
 		errCheck func(error) bool
 	}{
@@ -109,7 +121,7 @@ func TestSaveTag(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repository.SaveItem(tt.item.(*model.Tag))
+			err := repository.SaveItem(tt.item.(*model.Tag), "tag")
 			if tt.wantErr {
 				fmt.Println(err)
 				require.Error(t, err)
@@ -126,7 +138,7 @@ func TestSaveTag(t *testing.T) {
 func TestSaveProject(t *testing.T) {
 	tests := []struct {
 		name     string
-		item     interface{}
+		item     common.Item
 		wantErr  bool
 		errCheck func(error) bool
 	}{
@@ -146,7 +158,7 @@ func TestSaveProject(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repository.SaveItem(tt.item.(*model.Project))
+			err := repository.SaveItem(tt.item.(*model.Project), "project")
 			if tt.wantErr {
 				fmt.Println(err)
 				require.Error(t, err)
@@ -163,7 +175,7 @@ func TestSaveProject(t *testing.T) {
 func TestSaveReminder(t *testing.T) {
 	tests := []struct {
 		name     string
-		item     interface{}
+		item     common.Item
 		wantErr  bool
 		errCheck func(error) bool
 	}{
@@ -183,7 +195,7 @@ func TestSaveReminder(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repository.SaveItem(tt.item.(*model.Reminder))
+			err := repository.SaveItem(tt.item.(*model.Reminder), "reminder")
 			if tt.wantErr {
 				fmt.Println(err)
 				require.Error(t, err)

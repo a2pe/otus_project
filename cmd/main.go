@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"otus_project/internal/repository"
 	"syscall"
 	"time"
 
@@ -16,8 +17,13 @@ import (
 )
 
 func main() {
+	ctxDB := context.Background()
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	if err := repository.Init(ctxDB); err != nil {
+		log.Fatalf("Failed to initialize repository: %v", err)
+	}
 
 	// 1. Запуск HTTP сервера
 	httpApp, err := app.NewApp(ctx)
