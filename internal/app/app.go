@@ -1,3 +1,8 @@
+// @title Productivity Tracker API
+// @version 1.0
+// @description API for tracking users, projects, tasks and more.
+// @BasePath /api
+
 package app
 
 import (
@@ -9,10 +14,15 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	//"otus_project/internal"
 	"otus_project/internal/config"
 	"otus_project/internal/handler"
+	middleware2 "otus_project/middleware"
 	"syscall"
 	"time"
+
+	//"github.com/swaggo/http-swagger"
+	_ "otus_project/docs"
 )
 
 type App struct {
@@ -27,16 +37,37 @@ func NewApp(ctx context.Context) (*App, error) {
 	}, nil
 }
 
+//func (a *App) registerRoutes(r chi.Router) {
+//	r.Route("/api", func(r chi.Router) {
+//		itemTypes := []string{"user", "project", "task", "reminder", "tag", "time_entry"}
+//		for _, t := range itemTypes {
+//			r.Get(fmt.Sprintf("/%s", t), handler.GetAllHandler(t))
+//			r.Post(fmt.Sprintf("/%s", t), handler.CreateItemHandler(t))
+//			r.Put(fmt.Sprintf("/%s/{id}", t), handler.UpdateItemHandler(t))
+//			r.Delete(fmt.Sprintf("/%s/{id}", t), handler.DeleteItemHandler(t))
+//			r.Get(fmt.Sprintf("/%s/{id}", t), handler.GetItemByIDHandler(t))
+//		}
+//		r.Get("/swagger/*", httpSwagger.WrapHandler)
+//
+//	})
+//}
+
 func (a *App) registerRoutes(r chi.Router) {
 	r.Route("/api", func(r chi.Router) {
-		itemTypes := []string{"user", "project", "task", "reminder", "tag", "time_entry"}
-		for _, t := range itemTypes {
-			r.Get(fmt.Sprintf("/%s", t), handler.GetAllHandler(t))
-			r.Post(fmt.Sprintf("/%s", t), handler.CreateItemHandler(t))
-			r.Put(fmt.Sprintf("/%s/{id}", t), handler.UpdateItemHandler(t))
-			r.Delete(fmt.Sprintf("/%s/{id}", t), handler.DeleteItemHandler(t))
-			r.Get(fmt.Sprintf("/%s/{id}", t), handler.GetItemByIDHandler(t))
-		}
+		r.Post("/login", handler.LoginHandler)
+
+		r.Group(func(protected chi.Router) {
+			protected.Use(middleware2.AuthMiddleware)
+
+			itemTypes := []string{"user", "project", "task", "reminder", "tag", "time_entry"}
+			for _, t := range itemTypes {
+				protected.Get(fmt.Sprintf("/%s", t), handler.GetAllHandler(t))
+				protected.Post(fmt.Sprintf("/%s", t), handler.CreateItemHandler(t))
+				protected.Put(fmt.Sprintf("/%s/{id}", t), handler.UpdateItemHandler(t))
+				protected.Delete(fmt.Sprintf("/%s/{id}", t), handler.DeleteItemHandler(t))
+				protected.Get(fmt.Sprintf("/%s/{id}", t), handler.GetItemByIDHandler(t))
+			}
+		})
 	})
 }
 

@@ -3,12 +3,12 @@ package model
 import "time"
 
 type User struct {
-	ID        uint
-	email     string
-	password  string
-	Name      string
-	Timezone  string
-	CreatedAt time.Time
+	ID        uint      `json:"id" example:"1"`
+	email     string    `example:"user@example.com"`
+	password  string    `example:"123456"`
+	Name      string    `json:"name" validate:"required,min=2,max=100" example:"Alice"`
+	Timezone  string    `json:"timezone" example:"America/Los_Angeles"`
+	CreatedAt time.Time `json:"created_at" example:"2024-01-01T15:04:05Z07:00"`
 }
 
 func (u *User) Email() string {

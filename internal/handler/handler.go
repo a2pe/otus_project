@@ -16,6 +16,17 @@ var (
 	ErrInternal    = errors.New("internal server error")
 )
 
+// GetItemByIDHandler godoc
+// @Summary Получить сущность по ID
+// @Description Возвращает сущность по типу и ID
+// @Tags items
+// @Produce json
+// @Param type path string true "Тип сущности"
+// @Param id path int true "ID сущности"
+// @Success 200 {object} interface{}
+// @Failure 400,404 {string} string
+// @Router /api/{type}/{id} [get]
+// @Security BearerAuth
 func GetItemByIDHandler(itemType string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "id")
@@ -38,6 +49,16 @@ func GetItemByIDHandler(itemType string) http.HandlerFunc {
 	}
 }
 
+// GetAllHandler godoc
+// @Summary Получить список сущностей
+// @Description Возвращает список сущностей по типу: user, project, task, reminder, tag, time_entry
+// @Tags items
+// @Produce json
+// @Param type path string true "Тип сущности (user, project, task...)"
+// @Success 200 {array} interface{}
+// @Failure 400 {string} string "unknown item type"
+// @Router /api/{type} [get]
+// @Security BearerAuth
 func GetAllHandler(itemType string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data, err := repository.GetAllItems(itemType)
@@ -53,6 +74,18 @@ func GetAllHandler(itemType string) http.HandlerFunc {
 	}
 }
 
+// CreateItemHandler godoc
+// @Summary Создание сущности
+// @Description Создаёт сущность указанного типа: user, project, task, reminder, tag, time_entry
+// @Tags items
+// @Accept json
+// @Produce json
+// @Param item body interface{} true "Любая модель: user/project/task/etc"
+// @Success 201
+// @Failure 400 {string} string "invalid json"
+// @Failure 500 {string} string "failed to save item"
+// @Router /api/{type} [post]
+// @Security BearerAuth
 func CreateItemHandler(itemType string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		item := getEmptyItem(itemType)
@@ -79,6 +112,19 @@ func CreateItemHandler(itemType string) http.HandlerFunc {
 	}
 }
 
+// UpdateItemHandler godoc
+// @Summary Обновить сущность
+// @Description Обновляет сущность по ID
+// @Tags items
+// @Accept json
+// @Produce json
+// @Param type path string true "Тип сущности"
+// @Param id path int true "ID сущности"
+// @Param item body interface{} true "Обновлённая сущность"
+// @Success 200
+// @Failure 400,404,500 {string} string
+// @Router /api/{type}/{id} [put]
+// @Security BearerAuth
 func UpdateItemHandler(itemType string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idStr := chi.URLParam(r, "id")
@@ -110,6 +156,16 @@ func UpdateItemHandler(itemType string) http.HandlerFunc {
 	}
 }
 
+// DeleteItemHandler godoc
+// @Summary Удалить сущность
+// @Description Удаляет сущность по ID и типу
+// @Tags items
+// @Param type path string true "Тип сущности"
+// @Param id path int true "ID сущности"
+// @Success 204
+// @Failure 400,404 {string} string
+// @Router /api/{type}/{id} [delete]
+// @Security BearerAuth
 func DeleteItemHandler(itemType string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idStr := chi.URLParam(r, "id")

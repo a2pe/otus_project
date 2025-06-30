@@ -3,11 +3,11 @@ package model
 import "time"
 
 type Project struct {
-	ID          uint
-	UserID      uint
-	Name        string
-	Description string
-	CreatedAt   time.Time
+	ID          uint      `json:"id" example:"42"`
+	UserID      uint      `json:"user_id" example:"1"`
+	Name        string    `json:"name" example:"My Project"`
+	Description string    `json:"description,omitempty" example:"A sample project"`
+	CreatedAt   time.Time `json:"created_at" example:"2025-06-28T19:53:32.953897+04:00"`
 }
 
 func (p *Project) GetItem() uint {
