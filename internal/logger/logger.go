@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-kit/log"
 	"os"
+	"otus_project/internal/data"
 	"otus_project/internal/repository"
 	"sync"
 	"time"
@@ -12,6 +13,13 @@ import (
 
 var (
 	logger = log.NewLogfmtLogger(os.Stdout)
+
+	userPath        = data.GetFinalFilePath(data.UsersFile)
+	projectPath     = data.GetFinalFilePath(data.ProjectsFile)
+	tagsPath        = data.GetFinalFilePath(data.TagsFile)
+	tasksPath       = data.GetFinalFilePath(data.TasksFile)
+	remindersPath   = data.GetFinalFilePath(data.RemindersFile)
+	timeEntriesPath = data.GetFinalFilePath(data.TimeEntriesFile)
 
 	lastUsersLen       int
 	lastProjectsLen    int
@@ -38,14 +46,14 @@ func checkAndLogNewItems[T any](label string, mu *sync.Mutex, slice *[]*T, lastL
 	}
 }
 
-func StartSliceLogger(context context.Context) {
+func StartSliceLogger(ctx context.Context, logger log.Logger) {
 	go func() {
 		ticker := time.NewTicker(200 * time.Millisecond)
 		defer ticker.Stop()
 
 		for {
 			select {
-			case <-context.Done():
+			case <-ctx.Done():
 				err := logger.Log("msg", "context done: slice logger is stopped")
 				if err != nil {
 					fmt.Println(err)
@@ -62,4 +70,26 @@ func StartSliceLogger(context context.Context) {
 			}
 		}
 	}()
+}
+
+func LoadAll() error {
+	if err := data.LoadDataFromFile(userPath, &repository.UsersMu, &repository.Users, &lastUsersLen); err != nil {
+		return err
+	}
+	if err := data.LoadDataFromFile(projectPath, &repository.ProjectsMu, &repository.Projects, &lastProjectsLen); err != nil {
+		return err
+	}
+	if err := data.LoadDataFromFile(tasksPath, &repository.TasksMu, &repository.Tasks, &lastTasksLen); err != nil {
+		return err
+	}
+	if err := data.LoadDataFromFile(tagsPath, &repository.TagsMu, &repository.Tags, &lastTagsLen); err != nil {
+		return err
+	}
+	if err := data.LoadDataFromFile(remindersPath, &repository.RemindersMu, &repository.Reminders, &lastRemindersLen); err != nil {
+		return err
+	}
+	if err := data.LoadDataFromFile(timeEntriesPath, &repository.TimeEntriesMu, &repository.TimeEntries, &lastTimeEntriesLen); err != nil {
+		return err
+	}
+	return nil
 }
