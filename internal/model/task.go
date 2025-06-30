@@ -5,10 +5,10 @@ import "time"
 type Task struct {
 	ID          uint      `json:"id" example:"1" description:"Уникальный идентификатор задачи"`
 	ProjectID   uint      `json:"project_id" example:"42" description:"ID проекта, к которому относится задача"`
-	Title       string    `json:"title" example:"Написать репозиторий" description:"Название задачи"`
+	Title       string    `json:"title" example:"Написать репозиторий" description:"Название задачи" validate:"required"`
 	Description string    `json:"description" example:"Создать функции CRUD для трекера"`
-	Status      string    `json:"status" example:"in_progress" description:"Статус задачи"`
-	DueDate     time.Time `json:"due_date" example:"2025-07-01T15:04:05Z" description:"Срок исполнения"`
+	Status      string    `json:"status" example:"in_progress" description:"Статус задачи" validate:"required"`
+	DueDate     time.Time `json:"due_date" example:"2025-07-01T15:04:05Z" description:"Срок исполнения" validate:"required"`
 	EstimateHrs float64   `json:"estimate_hrs" example:"3.5" description:"Оценка времени выполнения в часах"`
 	CreatedAt   time.Time `json:"created_at" example:"2025-06-28T12:00:00Z" description:"Дата создания"`
 }

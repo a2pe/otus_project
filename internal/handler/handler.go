@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"net/http"
 	"otus_project/internal/model"
 	"otus_project/internal/notification"
@@ -14,6 +15,8 @@ import (
 )
 
 var (
+	validate = validator.New()
+
 	ErrInvalidID   = errors.New("invalid ID format")
 	ErrInvalidJSON = errors.New("invalid JSON body")
 	ErrUnknownType = errors.New("unknown item type")
@@ -103,6 +106,11 @@ func CreateItemHandler(itemType string) http.HandlerFunc {
 			return
 		}
 
+		if err := validate.Struct(item); err != nil {
+			http.Error(w, fmt.Sprintf("validation failed: %v", err), http.StatusBadRequest)
+			return
+		}
+
 		if err := repository.SaveItem(item); err != nil {
 			http.Error(w, "Failed to save item", http.StatusInternalServerError)
 			return
@@ -177,6 +185,11 @@ func UpdateItemHandler(itemType string) http.HandlerFunc {
 
 		if err := json.NewDecoder(r.Body).Decode(item); err != nil {
 			http.Error(w, ErrInvalidJSON.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if err := validate.Struct(item); err != nil {
+			http.Error(w, fmt.Sprintf("validation failed: %v", err), http.StatusBadRequest)
 			return
 		}
 
