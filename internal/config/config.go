@@ -22,8 +22,8 @@ var Cfg Config
 
 func NewConfig() *Config {
 	Cfg = Config{
-		Host:   "localhost",
-		Port:   8089,
+		Host:   "0.0.0.0",
+		Port:   8080,
 		Secret: "secret",
 	}
 	return &Cfg
