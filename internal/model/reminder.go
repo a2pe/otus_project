@@ -11,6 +11,14 @@ type Reminder struct {
 	CreatedAt time.Time
 }
 
-func (r Reminder) GetItem() uint {
+func (r *Reminder) GetItem() uint {
 	return r.ID
+}
+
+func (r *Reminder) SetID(item uint) {
+	r.ID = item
+}
+
+func (r *Reminder) SetCreatedAt(date time.Time) {
+	r.CreatedAt = date
 }

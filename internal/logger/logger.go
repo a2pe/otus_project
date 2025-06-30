@@ -29,7 +29,7 @@ var (
 	lastTimeEntriesLen int
 )
 
-func checkAndLogNewItems[T any](label string, mu *sync.Mutex, slice *[]*T, lastLen *int) {
+func checkAndLogNewItems[T any](label string, mu *sync.RWMutex, slice *[]*T, lastLen *int) {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -73,22 +73,22 @@ func StartSliceLogger(ctx context.Context, logger log.Logger) {
 }
 
 func LoadAll() error {
-	if err := data.LoadDataFromFile(userPath, &repository.UsersMu, &repository.Users, &lastUsersLen); err != nil {
+	if err := data.LoadDataFromFile(userPath, &repository.Users, &lastUsersLen); err != nil {
 		return err
 	}
-	if err := data.LoadDataFromFile(projectPath, &repository.ProjectsMu, &repository.Projects, &lastProjectsLen); err != nil {
+	if err := data.LoadDataFromFile(projectPath, &repository.Projects, &lastProjectsLen); err != nil {
 		return err
 	}
-	if err := data.LoadDataFromFile(tasksPath, &repository.TasksMu, &repository.Tasks, &lastTasksLen); err != nil {
+	if err := data.LoadDataFromFile(tasksPath, &repository.Tasks, &lastTasksLen); err != nil {
 		return err
 	}
-	if err := data.LoadDataFromFile(tagsPath, &repository.TagsMu, &repository.Tags, &lastTagsLen); err != nil {
+	if err := data.LoadDataFromFile(tagsPath, &repository.Tags, &lastTagsLen); err != nil {
 		return err
 	}
-	if err := data.LoadDataFromFile(remindersPath, &repository.RemindersMu, &repository.Reminders, &lastRemindersLen); err != nil {
+	if err := data.LoadDataFromFile(remindersPath, &repository.Reminders, &lastRemindersLen); err != nil {
 		return err
 	}
-	if err := data.LoadDataFromFile(timeEntriesPath, &repository.TimeEntriesMu, &repository.TimeEntries, &lastTimeEntriesLen); err != nil {
+	if err := data.LoadDataFromFile(timeEntriesPath, &repository.TimeEntries, &lastTimeEntriesLen); err != nil {
 		return err
 	}
 	return nil

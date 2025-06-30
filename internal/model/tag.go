@@ -1,9 +1,12 @@
 package model
 
+import "time"
+
 type Tag struct {
-	ID     uint
-	UserID uint
-	Name   string
+	ID        uint
+	UserID    uint
+	Name      string
+	CreatedAt time.Time
 }
 
 type TaskTag struct {
@@ -11,6 +14,14 @@ type TaskTag struct {
 	TagID  uint
 }
 
-func (t Tag) GetItem() uint {
+func (t *Tag) GetItem() uint {
 	return t.ID
+}
+
+func (t *Tag) SetID(item uint) {
+	t.ID = item
+}
+
+func (t *Tag) SetCreatedAt(date time.Time) {
+	t.CreatedAt = date
 }

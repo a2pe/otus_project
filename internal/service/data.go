@@ -38,7 +38,7 @@ func GenerateData(ctx context.Context) {
 				}
 				user.SetEmail(fmt.Sprintf("new_email-%d", num))
 				user.SetPassword("123456")
-				dataChan <- user
+				dataChan <- &user
 
 				project := model.Project{
 					ID:          num,
@@ -47,7 +47,7 @@ func GenerateData(ctx context.Context) {
 					CreatedAt:   time.Now(),
 					Description: fmt.Sprintf("project-%d", num),
 				}
-				dataChan <- project
+				dataChan <- &project
 
 				task := model.Task{
 					ID:          num,
@@ -58,7 +58,7 @@ func GenerateData(ctx context.Context) {
 					Description: fmt.Sprintf("task-%d", num),
 					DueDate:     time.Now().Add(24 * time.Hour * 10),
 				}
-				dataChan <- task
+				dataChan <- &task
 
 				reminder := model.Reminder{
 					ID:        num,
@@ -67,14 +67,14 @@ func GenerateData(ctx context.Context) {
 					RemindAt:  time.Now().Add(24 * time.Hour * 10),
 					CreatedAt: time.Now(),
 				}
-				dataChan <- reminder
+				dataChan <- &reminder
 
 				tag := model.Tag{
 					ID:     num,
 					UserID: user.ID,
 					Name:   fmt.Sprintf("tag-%d", num),
 				}
-				dataChan <- tag
+				dataChan <- &tag
 
 				timeEntry := model.TimeEntry{
 					ID:        num,
@@ -83,7 +83,7 @@ func GenerateData(ctx context.Context) {
 					StartTime: time.Now(),
 					CreatedAt: time.Now(),
 				}
-				dataChan <- timeEntry
+				dataChan <- &timeEntry
 			}
 		}
 	}()
